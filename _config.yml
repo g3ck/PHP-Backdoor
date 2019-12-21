@@ -1,0 +1,5 @@
+theme: jekyll-theme-cayman
+show_downloads: true
+title: PHP Backdoor
+title-separator: /
+description: Terminal commands directly from a browser
