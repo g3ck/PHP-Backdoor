@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExtendedServerSettings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ConfigureAsService>true</ConfigureAsService>
+  <InnoDbClusterSandboxInstancesCount>0</InnoDbClusterSandboxInstancesCount>
+  <InnoDbClusterName>myCluster</InnoDbClusterName>
+  <InnoDbClusterSeedInstancePort>3306</InnoDbClusterSeedInstancePort>
+  <InnoDbClusterType>StandAlone</InnoDbClusterType>
+  <InnoDbClusterSeedInstanceHost />
+  <InnoDbClusterAdminUserName>ic</InnoDbClusterAdminUserName>
+  <PendingSystemTablesUpgrade>false</PendingSystemTablesUpgrade>
+  <SystemTablesUpgraded>None</SystemTablesUpgraded>
+</ExtendedServerSettings>
