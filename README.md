@@ -1,7 +1,7 @@
 ![PHP Backdoor](https://github.com/g3ck/PHP-Backdoor/raw/master/assets/img/header.png "PHP Backdoor")
 ![PHP Backdoor](https://github.com/g3ck/PHP-Backdoor/raw/master/assets/img/screenshot.png "PHP Backdoor")
 
-# PHP Backdoor
+# PHP Backdoor v3
 
 ## Table of contents
 
@@ -25,14 +25,14 @@ The application is built in single php file. The size of the `dist` file is less
 
 ## Files
 
-- `dits/terminal.php` - Minimized distribution file
-- `src/terminal.php` - Source file
+- `dits/backdoor.php` - Minimized distribution file
+- `src/backdoor.php` - Source file
 
 ## Installation
 
-- [`Download`](https://github.com/g3ck/PHP-Backdoor/archive/master.zip) **dits/terminal.php** file
-- `Upload` **terminal.php** file to your server
-- `Run` script by url **[your domain]/terminal.php**
+- [`Download`](https://github.com/g3ck/PHP-Backdoor/archive/master.zip) **dist/backdoor.php** file
+- `Upload` **backdoor.php** file to your server
+- `Run` script by url **[your domain]/backdoor.php**
 - `Join it`
 
 ## Additional commands

